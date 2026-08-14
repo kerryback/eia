@@ -37,8 +37,12 @@ MAX_SESSIONS = int(os.environ.get("MAX_SESSIONS", "3"))
 SESSION_IDLE_SECONDS = int(os.environ.get("SESSION_IDLE_SECONDS", str(30 * 60)))
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
-DOC_SUFFIXES = {".xlsx", ".docx", ".pptx", ".pdf", ".csv", ".md", ".txt", ".json"}
+DOC_SUFFIXES = {".xlsx", ".docx", ".pptx", ".pdf", ".csv", ".md"}
 ARTIFACT_SUFFIXES = IMAGE_SUFFIXES | DOC_SUFFIXES
+
+# Tooling the agent may install while working (the pptx skill npm-installs
+# pptxgenjs, for one) leaves scaffolding behind that is not a deliverable.
+IGNORED_NAMES = {"package.json", "package-lock.json", "requirements.txt", "README.md"}
 
 SYSTEM_PROMPT = """\
 You are an energy data analyst for Rice Business. You answer questions using \
@@ -61,8 +65,9 @@ results spill to a dataframe you can query with SQL via `eia_dataframe_query`.
 
 ## Producing output
 
-Write every file into your working directory (the current directory). Never \
-write outside it.
+Save every deliverable directly in your working directory (the current \
+directory), not in a subdirectory — only files at the top level are returned \
+to the user. Never write outside the working directory.
 
 - Charts: matplotlib, saved as PNG at 150 dpi. Label axes, include units, and \
   title the chart. Save with a short descriptive filename.
@@ -180,20 +185,27 @@ class SessionManager:
         return session
 
     def new_artifacts(self, session: Session) -> list[Artifact]:
-        """Files the agent created in this workspace since the last turn."""
+        """Deliverables the agent created in this workspace since the last turn.
+
+        Deliberately shallow: only the workspace root is scanned, because the
+        agent is told to save deliverables there. Anything the agent installs
+        while working (node_modules, virtualenvs, caches) lands in
+        subdirectories and is ignored rather than offered as a download.
+        """
         found: list[Artifact] = []
-        for path in sorted(session.workspace.rglob("*")):
-            if not path.is_file() or ".claude" in path.parts:
+        for path in sorted(session.workspace.iterdir()):
+            if not path.is_file() or path.name.startswith("."):
                 continue
-            name = str(path.relative_to(session.workspace))
-            if name in session.seen_files:
+            if path.name in IGNORED_NAMES:
                 continue
-            session.seen_files.add(name)
             suffix = path.suffix.lower()
             if suffix not in ARTIFACT_SUFFIXES:
                 continue
+            if path.name in session.seen_files:
+                continue
+            session.seen_files.add(path.name)
             kind = "image" if suffix in IMAGE_SUFFIXES else "file"
-            found.append(Artifact(name=name, kind=kind))
+            found.append(Artifact(name=path.name, kind=kind))
         return found
 
     async def close(self, session_id: str) -> None:
