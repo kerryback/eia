@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EIA Energy Analyst</title>
+<style>
+  :root {
+    --bg: #0f1620;
+    --panel: #17202c;
+    --panel-2: #1e2937;
+    --line: #2c3a4c;
+    --text: #e6edf5;
+    --muted: #90a2b8;
+    --accent: #2f9e8f;
+    --accent-dim: #1f6d63;
+    --user: #24425c;
+    --danger: #d9534f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  .app { width: 100%; max-width: 920px; display: flex; flex-direction: column; }
+
+  header {
+    border: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    background: var(--panel);
+    padding: 1rem 1.25rem;
+  }
+
+  h1 {
+    margin: 0 0 .25rem;
+    font-size: 1.4rem;
+    letter-spacing: -.01em;
+  }
+
+  h1 .dot { color: var(--accent); }
+
+  header p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+  #log {
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    height: 60vh;
+    min-height: 340px;
+    overflow-y: auto;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .turn { display: flex; flex-direction: column; gap: .5rem; }
+  .turn.user { align-items: flex-end; }
+
+  .bubble {
+    max-width: 85%;
+    padding: .7rem .95rem;
+    border-radius: 12px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .user .bubble { background: var(--user); border-bottom-right-radius: 3px; }
+
+  .agent .bubble {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 3px;
+  }
+
+  .bubble.error { border-color: var(--danger); color: #ffb3b1; }
+
+  .steps {
+    align-self: flex-start;
+    font-size: .82rem;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    padding-left: .3rem;
+  }
+
+  .step::before { content: "▸ "; color: var(--accent); }
+  .step.active { color: var(--accent); }
+
+  figure {
+    margin: 0;
+    align-self: flex-start;
+    max-width: 85%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  figure img { display: block; width: 100%; }
+
+  figure figcaption {
+    background: var(--panel);
+    color: var(--muted);
+    font-size: .78rem;
+    padding: .4rem .6rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .download {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: var(--panel);
+    border: 1px solid var(--accent-dim);
+    border-radius: 8px;
+    padding: .5rem .8rem;
+    color: var(--text);
+    text-decoration: none;
+    font-size: .88rem;
+  }
+
+  .download:hover { border-color: var(--accent); }
+  .download .ext {
+    background: var(--accent-dim);
+    color: #eafffb;
+    border-radius: 4px;
+    padding: .05rem .4rem;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  form {
+    display: flex;
+    gap: .6rem;
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    background: var(--panel);
+    padding: .85rem;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    font: inherit;
+    padding: .65rem .8rem;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+  button {
+    font: inherit;
+    padding: .65rem 1.3rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #06231f;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled) { background: #37b3a2; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: .75rem;
+  }
+
+  .examples button {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-weight: 400;
+    font-size: .82rem;
+    padding: .35rem .7rem;
+    border-radius: 999px;
+  }
+
+  .examples button:hover:not(:disabled) { border-color: var(--accent); color: var(--text); background: transparent; }
+
+  footer { margin-top: .8rem; text-align: center; font-size: .76rem; color: var(--muted); }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 560px) { .bubble, figure { max-width: 100%; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>EIA Energy Analyst<span class="dot">.</span></h1>
+    <p>Ask about U.S. energy data. Answers are pulled live from the EIA API and can come back as charts, workbooks, reports, or decks.</p>
+    <div class="examples">
+      <button type="button" data-q="Chart U.S. retail electricity prices for all sectors over the last 10 years.">Electricity price trend</button>
+      <button type="button" data-q="Compare monthly U.S. crude oil production over the last 5 years and chart it.">Crude production</button>
+      <button type="button" data-q="Build an Excel workbook of U.S. natural gas storage over the last 3 years, with a chart.">Nat gas workbook</button>
+      <button type="button" data-q="Write a short Word report on U.S. renewable electricity generation growth, with charts.">Renewables report</button>
+    </div>
+  </header>
+
+  <div id="log"></div>
+
+  <form id="form" autocomplete="off">
+    <input id="input" type="text" placeholder="Ask about U.S. energy data…" required>
+    <button id="send" type="submit">Ask</button>
+  </form>
+
+  <footer>
+    Data: <a href="https://www.eia.gov/opendata/">U.S. Energy Information Administration</a>
+    via <a href="https://eia.rice-business.org">eia.rice-business.org</a> · Rice Business
+  </footer>
+</div>
+
+<script>
+  const log = document.getElementById("log");
+  const form = document.getElementById("form");
+  const input = document.getElementById("input");
+  const send = document.getElementById("send");
+
+  let sessionId = null;
+
+  function turn(role) {
+    const div = document.createElement("div");
+    div.className = "turn " + role;
+    log.append(div);
+    return div;
+  }
+
+  function scroll() { log.scrollTop = log.scrollHeight; }
+
+  function bubble(parent, text, isError = false) {
+    const div = document.createElement("div");
+    div.className = "bubble" + (isError ? " error" : "");
+    div.textContent = text;
+    parent.append(div);
+    scroll();
+    return div;
+  }
+
+  function note(text) {
+    const t = turn("agent");
+    bubble(t, text);
+  }
+
+  async function ensureSession() {
+    if (sessionId) return sessionId;
+    const res = await fetch("/api/session", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Could not start a session.");
+    sessionId = data.session_id;
+    return sessionId;
+  }
+
+  note("Ask me about U.S. energy data — prices, production, consumption, generation. I'll pull it from the EIA and chart it. Say the word and I'll put it in a workbook, report, or deck.");
+
+  async function ask(question) {
+    const userTurn = turn("user");
+    bubble(userTurn, question);
+
+    const agentTurn = turn("agent");
+    const steps = document.createElement("div");
+    steps.className = "steps";
+    agentTurn.append(steps);
+
+    let current = null;
+    const addStep = (label) => {
+      if (current) current.classList.remove("active");
+      current = document.createElement("div");
+      current.className = "step active";
+      current.textContent = label;
+      steps.append(current);
+      scroll();
+    };
+    addStep("Thinking");
+
+    input.disabled = send.disabled = true;
+
+    try {
+      const id = await ensureSession();
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: id, message: question }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Request failed.");
+      }
+
+      // Server-sent events, one JSON object per "data:" line.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const event = JSON.parse(line.slice(6));
+
+          if (event.type === "tool") {
+            addStep(event.name);
+          } else if (event.type === "text") {
+            bubble(agentTurn, event.text);
+          } else if (event.type === "error") {
+            bubble(agentTurn, event.text, true);
+          } else if (event.type === "artifact") {
+            if (event.kind === "image") {
+              const fig = document.createElement("figure");
+              const img = document.createElement("img");
+              img.src = event.url;
+              img.alt = event.name;
+              const cap = document.createElement("figcaption");
+              cap.textContent = event.name;
+              fig.append(img, cap);
+              agentTurn.append(fig);
+            } else {
+              const a = document.createElement("a");
+              a.className = "download";
+              a.href = event.url;
+              a.download = "";
+              const ext = document.createElement("span");
+              ext.className = "ext";
+              ext.textContent = event.name.split(".").pop();
+              a.append(ext, document.createTextNode(event.name));
+              agentTurn.append(a);
+            }
+            scroll();
+          }
+        }
+      }
+      if (current) current.classList.remove("active");
+    } catch (err) {
+      if (current) current.classList.remove("active");
+      bubble(agentTurn, err.message, true);
+    } finally {
+      input.disabled = send.disabled = false;
+      input.focus();
+      scroll();
+    }
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    ask(text);
+  });
+
+  document.querySelectorAll(".examples button").forEach((b) => {
+    b.addEventListener("click", () => {
+      if (send.disabled) return;
+      ask(b.dataset.q);
+    });
+  });
+</script>
+</body>
+</html>

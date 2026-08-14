@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+claude-agent-sdk
+python-dotenv
+pandas
+numpy
+matplotlib
+openpyxl
+python-docx
+python-pptx
+pypdf
+pdfplumber
+reportlab
