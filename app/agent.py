@@ -100,6 +100,12 @@ ALLOWED_TOOLS = [
 ]
 
 
+def _log_cli_stderr(line: str) -> None:
+    line = line.strip()
+    if line:
+        print(f"[claude-cli] {line}", flush=True)
+
+
 @dataclass
 class Artifact:
     name: str
@@ -130,10 +136,16 @@ class SessionManager:
             system_prompt=SYSTEM_PROMPT,
             mcp_servers={"eia": {"type": "http", "url": EIA_MCP_URL}},
             allowed_tools=ALLOWED_TOOLS,
-            permission_mode="bypassPermissions",
+            # Nobody is at a terminal to answer a prompt, so the allowlist is
+            # the policy: "dontAsk" auto-approves the tools above and denies
+            # everything else outright.
+            permission_mode="dontAsk",
             # "project" lets the CLI discover the vendored docx/xlsx/pptx/pdf
             # skills from the .claude directory linked into the workspace.
             setting_sources=["project"],
+            # Surface CLI-level failures (bad flags, auth, MCP connect) in the
+            # container logs; without this they collapse into "exit code 1".
+            stderr=_log_cli_stderr,
         )
 
     async def create(self) -> str:
@@ -247,7 +259,7 @@ def _tool_label(name: str) -> str:
         "Read": "Reading a file",
         "Glob": "Looking for files",
         "Grep": "Searching files",
-        "Skill": "Loading a document skill",
+        "Skill": "Loading a skill",
     }
     return labels.get(name, name)
 

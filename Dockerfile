@@ -14,7 +14,6 @@ RUN apt-get update \
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     MPLBACKEND=Agg \
-    HOME=/app \
     PORT=8000
 
 WORKDIR /app
@@ -24,8 +23,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Warm the matplotlib font cache so the first chart isn't slowed by it.
-RUN python -c "import matplotlib.pyplot" && mkdir -p /app/workspaces
+# The CLI refuses to skip permission prompts when running as root, and the
+# agent runs unattended, so give it an unprivileged user to work as.
+RUN useradd --create-home --home-dir /home/app --uid 10001 app \
+    && mkdir -p /app/workspaces \
+    && chown -R app:app /app /home/app
+
+USER app
+ENV HOME=/home/app
+
+# Warm the matplotlib font cache as the runtime user, so the first chart of the
+# first session isn't paying for it.
+RUN python -c "import matplotlib.pyplot"
 
 EXPOSE 8000
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
