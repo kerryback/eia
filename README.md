@@ -16,8 +16,14 @@ Live at **https://eia.kerryback.com**.
   tools — matplotlib for charts, and the vendored `xlsx` / `docx` / `pptx` /
   `pdf` skills in `.claude/skills/` for documents.
 - **Each browser session** gets an isolated workspace under `workspaces/`, which
-  is the agent's `cwd` and the only place it can write. Files it creates there
-  are detected after each turn and returned to the browser as artifacts.
+  is the agent's `cwd` and the only place it can write. Files it saves in the
+  top level of that workspace are detected after each turn and returned to the
+  browser as artifacts. The scan is deliberately shallow: the document skills
+  install their own tooling (the `pptx` skill npm-installs `pptxgenjs`), and
+  none of that scaffolding should be offered as a download.
+- **Permissions**: the agent runs in `dontAsk` mode — the tools in
+  `ALLOWED_TOOLS` are auto-approved and everything else is denied. No prompts
+  (nobody is at a terminal to answer one) and no permission bypass.
 - **Streaming**: `/api/chat` is server-sent events, so the UI shows each step
   (searching routes, querying, charting) while the turn runs.
 
