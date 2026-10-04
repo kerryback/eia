@@ -29,11 +29,7 @@ WORKSPACES = REPO_ROOT / "workspaces"
 SKILLS_SOURCE = REPO_ROOT / ".claude"
 
 MODEL = "claude-sonnet-5"
-EIA_MCP_URL = "https://eia.rice-business.org/mcp"
-
-# The MCP server requires an API key. It admits this app to the server; the server's
-# own EIA API key never comes back to us.
-MCP_API_KEY = os.environ.get("MCP_API_KEY", "")
+EIA_MCP_URL = "https://eia.kerryback.com/mcp"
 
 # Each live session holds a `claude` subprocess plus whatever Python the agent
 # runs, so this is a memory cap as much as anything. Tune per instance size.
@@ -143,15 +139,7 @@ class SessionManager:
             model=MODEL,
             cwd=str(workspace),
             system_prompt=SYSTEM_PROMPT,
-            mcp_servers={
-                "eia": {
-                    "type": "http",
-                    "url": EIA_MCP_URL,
-                    "headers": (
-                        {"Authorization": f"Bearer {MCP_API_KEY}"} if MCP_API_KEY else {}
-                    ),
-                }
-            },
+            mcp_servers={"eia": {"type": "http", "url": EIA_MCP_URL}},
             allowed_tools=ALLOWED_TOOLS,
             # Nobody is at a terminal to answer a prompt, so the allowlist is
             # the policy: "dontAsk" auto-approves the tools above and denies

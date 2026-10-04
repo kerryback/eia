@@ -9,7 +9,7 @@ Live at **https://eia.kerryback.com**.
 
 ## How it works
 
-- **Data** comes from the EIA MCP server at `https://eia.rice-business.org/mcp`,
+- **Data** comes from the EIA MCP server at `https://eia.kerryback.com/mcp`,
   wired in as a remote HTTP MCP server. The agent is not allowed to source EIA
   numbers any other way.
 - **Analysis and output** run in the agent's own workspace via its Bash/Write
