@@ -28,7 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 WORKSPACES = REPO_ROOT / "workspaces"
 SKILLS_SOURCE = REPO_ROOT / ".claude"
 
-MODEL = "claude-sonnet-5"
+MODEL = "claude-sonnet-5-5"
 EIA_MCP_URL = "https://eia.kerryback.com/mcp"
 
 # Each live session holds a `claude` subprocess plus whatever Python the agent

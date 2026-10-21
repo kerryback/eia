@@ -27,7 +27,7 @@ Live at **https://eia.kerryback.com**.
 - **Streaming**: `/api/chat` is server-sent events, so the UI shows each step
   (searching routes, querying, charting) while the turn runs.
 
-Model: `claude-sonnet-5`.
+Model: `claude-sonnet-5-5`, through the Rice AI gateway.
 
 ## Layout
 
